@@ -1,0 +1,124 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e251860fcd970734c9f14ebd98a146c3, type: 3}
+  m_Name: GS-20220824 - 205210
+  m_EditorClassIdentifier: 
+  m_name: Session 20220824-205210
+  m_description: 'Rocking out at Creativity Central!
+
+
+    If you like Gaia please
+    consider rating it :)'
+  m_previewImage: {fileID: 0}
+  m_dateCreated: 8/24/2022 8:52:10 PM
+  m_terrainWidth: 2048
+  m_terrainDepth: 2048
+  m_terrainHeight: 2048
+  m_seaLevel: 50
+  m_spawnDensity: 0.6
+  m_isLocked: 0
+  m_previewImageBytes: 
+  m_previewImageWidth: 0
+  m_previewImageHeight: 0
+  m_operations:
+  - m_description: 'Creating World: 1 x 1 tiles, tile size: 2048'
+    m_operationType: 0
+    m_isActive: 1
+    m_affectedTerrainNames:
+    - Terrain_0_0-20220824 - 205210
+    m_operationDateTime: 8/24/2022 8:52:10 PM
+    scriptableObjectAssetGUID: 220231e0e3209a2469f0ec3bf07e3638
+    m_isFoldedOut: 0
+    sessionPlaybackState: 1
+    m_terrainsFoldedOut: 0
+    m_serializedExternalAction: 
+  - m_description: RaiseHeight - 4k River 1
+    m_operationType: 4
+    m_isActive: 1
+    m_affectedTerrainNames:
+    - Terrain_0_0-20220824 - 205210
+    m_operationDateTime: 8/24/2022 8:53:33 PM
+    scriptableObjectAssetGUID: 347f18cbbb3122042b38d076dca7a87a
+    m_isFoldedOut: 0
+    sessionPlaybackState: 1
+    m_terrainsFoldedOut: 0
+    m_serializedExternalAction: 
+  - m_description: Spawning - Gaia Pro Sample-Texture(Clone)
+    m_operationType: 7
+    m_isActive: 1
+    m_affectedTerrainNames:
+    - Terrain_0_0-20220824 - 205210
+    m_operationDateTime: 8/24/2022 8:53:34 PM
+    scriptableObjectAssetGUID: 6acc120894d425d46bc66e430f2ad846
+    m_isFoldedOut: 0
+    sessionPlaybackState: 1
+    m_terrainsFoldedOut: 0
+    m_serializedExternalAction: 
+  - m_description: Spawning - Multiple Spawners (4)
+    m_operationType: 7
+    m_isActive: 1
+    m_affectedTerrainNames:
+    - Terrain_0_0-20220824 - 205210
+    m_operationDateTime: 8/24/2022 8:53:44 PM
+    scriptableObjectAssetGUID: f8a5da8880d770948aefeae2461488d6
+    m_isFoldedOut: 0
+    sessionPlaybackState: 1
+    m_terrainsFoldedOut: 0
+    m_serializedExternalAction: 
+  - m_description: Spawning - Multiple Spawners (4)
+    m_operationType: 7
+    m_isActive: 1
+    m_affectedTerrainNames:
+    - Terrain_0_0-20220824 - 205210
+    m_operationDateTime: 8/24/2022 8:54:58 PM
+    scriptableObjectAssetGUID: d41f6fcf36c177a40a322d342028b25a
+    m_isFoldedOut: 0
+    sessionPlaybackState: 1
+    m_terrainsFoldedOut: 0
+    m_serializedExternalAction: 
+  - m_description: 'Spawning - '
+    m_operationType: 7
+    m_isActive: 1
+    m_affectedTerrainNames:
+    - Terrain_0_0-20220824 - 205210
+    m_operationDateTime: 8/24/2022 8:58:11 PM
+    scriptableObjectAssetGUID: 87ce27e63d75d5646970745c4580ecdc
+    m_isFoldedOut: 0
+    sessionPlaybackState: 1
+    m_terrainsFoldedOut: 0
+    m_serializedExternalAction: 
+  - m_description: 'Spawning - '
+    m_operationType: 7
+    m_isActive: 1
+    m_affectedTerrainNames:
+    - Terrain_0_0-20220824 - 205210
+    m_operationDateTime: 8/24/2022 9:00:14 PM
+    scriptableObjectAssetGUID: 317c7a6f9fcc9e741b7ceb851cc14c93
+    m_isFoldedOut: 0
+    sessionPlaybackState: 1
+    m_terrainsFoldedOut: 0
+    m_serializedExternalAction: 
+  m_terrainMinMaxCache:
+  - guid: d080f00eda5846047afbec8b8ebdc6b7
+    isWorldmap: 0
+    recalculate: 0
+    min: 0
+    max: 204.81563
+  m_bakedMaskCacheEntries:
+  - fileName: Terrain_0_0-20220824 - 205210_LayerTree_0_3
+    assetPath: Assets/Procedural Worlds/Gaia/TerrainCollisionData/Terrain_0_0-20220824
+      - 205210/Terrain_0_0-20220824 - 205210_LayerTree_0_3
+    fullPath: D:/GitHub/holbertonschool-ar-vr-portfolio-project/Assets/Procedural
+      Worlds/Gaia/TerrainCollisionData/Terrain_0_0-20220824 - 205210/Terrain_0_0-20220824
+      - 205210_LayerTree_0_3
+    texture: {fileID: 0}
+  m_worldBiomeMaskSettings: {fileID: 0}
