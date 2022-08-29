@@ -72,6 +72,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # Assets
-*/[Aa]ssets/Gaia User Data/
-*/[Aa]ssets/Procedural Worlds/
-*/[Aa]ssets/Cartoon_Texture_Pack/
+*/Assets/Gaia User Data/
+*/Assets/Procedural Worlds/
+*/Assets/Cartoon_Texture_Pack/
