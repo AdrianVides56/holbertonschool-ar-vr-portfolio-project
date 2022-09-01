@@ -10,6 +10,7 @@ public class Player : MonoBehaviour
     private Transform cam;
     private World world;
 
+    // Movement variables
     public float walkSpeed = 3f;
     public float runSpeed = 6f;
     public float jumpForce = 5f;
@@ -18,6 +19,7 @@ public class Player : MonoBehaviour
     public float playerWidth = 0.15f;
     public float playerHeight = 1.8f;
 
+    // Input variables
     private float horizontal;
     private float vertical;
     private float mouseX;

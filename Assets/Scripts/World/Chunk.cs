@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 
 public class Chunk
 {
@@ -17,7 +18,7 @@ public class Chunk
 
     public byte[,,] voxelMap = new byte[VoxelData.chunkWidth, VoxelData.chunkHeight, VoxelData.chunkWidth];
 
-    World world;
+    World world;    
 
     private bool _isActive;
     public bool isVoxelMapPopulated = false;
@@ -44,9 +45,9 @@ public class Chunk
         chunkObject.transform.position = new Vector3(coord.x * VoxelData.chunkWidth, 0.0f, coord.z * VoxelData.chunkWidth);  
         chunkObject.name = "Chunk " + coord.x + ", " + coord.z;
 
+
         PopulateVoxelMap();
-        CreateMeshData();
-        CreateMesh();
+        UpdateChunk();
     }
 
     void PopulateVoxelMap()
@@ -64,8 +65,10 @@ public class Chunk
         isVoxelMapPopulated = true;
     }
 
-    void CreateMeshData()
+    void UpdateChunk()
     {
+        ClearMeshData();
+
         for (int y = 0; y < VoxelData.chunkHeight; y++)
         {
             for (int x = 0; x < VoxelData.chunkWidth; x++)
@@ -73,10 +76,19 @@ public class Chunk
                 for (int z = 0; z < VoxelData.chunkWidth; z++)
                 {
                     if (world.blocktypes[voxelMap[x, y, z]].isSolid)
-                        AddVoxelDataToChunk(new Vector3(x, y, z));
+                        UpdateMeshData(new Vector3(x, y, z));
                 }
             }
         }
+        CreateMesh();
+    }
+
+    void ClearMeshData()
+    {
+        vertexIndex = 0;
+        vertices.Clear();
+        triangles.Clear();
+        uvs.Clear();
     }
 
     public bool isActive
@@ -92,6 +104,38 @@ public class Chunk
 
     public Vector3 position { get { return chunkObject.transform.position; } }
 
+    public void EditVoxel(Vector3 pos, byte newID)
+    {
+        int xCheck = Mathf.FloorToInt(pos.x);
+        int yCheck = Mathf.FloorToInt(pos.y);
+        int zCheck = Mathf.FloorToInt(pos.z);
+
+        xCheck -= Mathf.FloorToInt(chunkObject.transform.position.x);
+        zCheck -= Mathf.FloorToInt(chunkObject.transform.position.z);
+        
+        voxelMap[xCheck, yCheck, zCheck] = newID;
+
+        UpdateSurroundingChunks(xCheck, yCheck, zCheck);
+
+        UpdateChunk();
+    }
+
+    void UpdateSurroundingChunks(int x, int y, int z)
+    {
+        Vector3 thisVoxel = new Vector3(x, y, z);
+
+
+        for (int i = 0; i < 6; i++)
+        {
+            Vector3 currentVoxel = thisVoxel + VoxelData.faceChecks[i];
+
+            if (!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
+            {
+                world.GetChunkFromVector3(currentVoxel + position).UpdateChunk();
+            }
+        }
+    }
+
     bool IsVoxelInChunk(int x, int y, int z)
     {
         if (x < 0 || x > VoxelData.chunkWidth - 1 || y < 0 || y > VoxelData.chunkHeight - 1 || z < 0 || z > VoxelData.chunkWidth - 1)
@@ -100,7 +144,7 @@ public class Chunk
             return true;
     }
 
-    bool CheckVoxel(Vector3 pos)
+    public bool CheckVoxel(Vector3 pos)
     {
         int x = Mathf.FloorToInt(pos.x);
         int y = Mathf.FloorToInt(pos.y);
@@ -124,7 +168,7 @@ public class Chunk
         return voxelMap[xCheck, yCheck, zCheck];
     }
 
-    void AddVoxelDataToChunk(Vector3 pos)
+    void UpdateMeshData(Vector3 pos)
     {
         for (int i = 0; i < 6; i++)
         {
@@ -176,10 +220,6 @@ public class Chunk
 
         y = 1f - y - VoxelData.NormalizedBlockTextureSize;
 
-        /* uvs.Add(new Vector2(x, y));
-        uvs.Add(new Vector2(x, y + VoxelData.NormalizedBlockTextureSize));
-        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y));
-        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y + VoxelData.NormalizedBlockTextureSize)); */
         uvs.Add(new Vector2(x + uvOffset, y + uvOffset));
         uvs.Add(new Vector2(x + uvOffset, y + VoxelData.NormalizedBlockTextureSize - uvOffset));
         uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y + uvOffset));
