@@ -4,7 +4,7 @@ VR-Craft is a [Voxel](https://www.computerhope.com/jargon/v/voxel.htm) Game insp
 
 ---
 
-#### Install: 
+### Install: 
 Quest2
 1. Download the apk file from [this link](https://drive.google.com/drive/folders/1UO86wKRdOz3C8rQGDLFnEJdnh_2V4XKX?usp=sharing)
 2. Follow the steps from [this video](https://youtu.be/zzizceAOW-w)
@@ -12,7 +12,8 @@ Quest2
 
 ---
 
-![VR-Craft Preview](https://github.com/AdrianVides56/holbertonschool-ar-vr-portfolio-project/blob/main/Assets/Resources/VRCraft.gif)
+### Preview:
+![VR-Craft Preview](https://github.com/AdrianVides56/holbertonschool-ar-vr-portfolio-project/blob/main/Assets/Resources/VRCraft.gif?raw=true)
  
 ---
 
