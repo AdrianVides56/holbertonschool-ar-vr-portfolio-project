@@ -1,5 +1,7 @@
 # VR-Craft
 
+![VR-Craft Icon](https://github.com/AdrianVides56/holbertonschool-ar-vr-portfolio-project/blob/main/Assets/Resources/VR_Craft_Icon.png?raw=true)
+
 VR-Craft is a [Voxel](https://www.computerhope.com/jargon/v/voxel.htm) Game inspired by [Minecraft](https://www.minecraft.net/en-us), where you can explore the world, create different kind of buildings and much more.
 
 ---
