@@ -1,35 +1,35 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
-using TMPro;
+using UnityEngine.XR.Interaction.Toolkit;
+using Unity.XR.CoreUtils;
 
 public class PlayerVR : MonoBehaviour
 {
     private World world;
 
-    // Movement variables
+    [Header("Movement")]
     public float walkSpeed = 3f;
     public float runSpeed = 6f;
-    public bool isGrounded;
+    public bool isGrounded => Physics.OverlapSphere(groundCheckPoint.position, .25f, groundLayer).Length > 0;
     public bool isRunning;
     public float jumpForce = 5f;
     private bool jumpRequest;
     private float verticalMomentum = 0f;
     public float gravity = -9.81f;
     private Vector3 velocity;
+    private Rigidbody _body;
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private Transform groundCheckPoint;
+    private XROrigin _xrOrigin;
+    private CapsuleCollider _capsuleCollider;
 
-    public float playerWidth = 0.5f;
-    public float playerHeight = 1.8f;
-
-    // Input variables
-    XRIDefaultInputActions inputActions;
     private float horizontal;
     private float vertical;
-    private float mouseX;
-    public float mouseY;
+    private float turn;
+    public float scrollToolBar;
 
+    [Header("")]
+    public byte selectedBlockIndex = 1;
     public Transform highlightBlock;
     public Transform placeBlock;
     public float checkIncrement = 0.1f;
@@ -38,43 +38,61 @@ public class PlayerVR : MonoBehaviour
     public Transform rHand;
     public Transform lHand;
 
-    public byte selectedBlockIndex = 1;
+    public float playerWidth = 0.5f;
+    public float playerHeight = 1.8f;
+
+    public GameObject debugScreen;
+
+    [Header("My Actions")]
+    [SerializeField] private InputActionReference moveActionReference;
+    [SerializeField] private InputActionReference turnActionReference;
+    [SerializeField] private InputActionReference scrollActionReference;
+    [SerializeField] private InputActionReference jumpActionReference;
+    [SerializeField] private InputActionReference runActionReference;
+    [SerializeField] private InputActionReference debugScreenActionReference;
+    [SerializeField] private InputActionReference removeBlockActionReference;
+    [SerializeField] private InputActionReference placeBlockActionReference;
 
     void Awake()
     {
-        inputActions = new XRIDefaultInputActions();
-
-        inputActions.XRILeftHandLocomotion.Move.performed += ctx =>
+        // Movement - Left Controller
+        moveActionReference.action.performed += ctx =>
         {
             horizontal = ctx.ReadValue<Vector2>().x;
             vertical = ctx.ReadValue<Vector2>().y;
         };
-        inputActions.XRILeftHandLocomotion.Move.canceled += ctx =>
+        moveActionReference.action.canceled += ctx =>
         {
             horizontal = 0f;
             vertical = 0f;
         };
-        inputActions.XRIRightHandLocomotion.Move.performed += ctx => mouseX = ctx.ReadValue<Vector2>().x;
-        inputActions.XRIRightHandLocomotion.Move.canceled += ctx => mouseX = 0f;
-        inputActions.XRIRightHandLocomotion.Move.performed += ctx => mouseY = ctx.ReadValue<Vector2>().y;
-        inputActions.XRIRightHandLocomotion.Move.canceled += ctx => mouseY = 0;
-        inputActions.XRIRightHandInteraction.Jump.performed += ctx => 
+        runActionReference.action.started += ctx => isRunning = true;
+        runActionReference.action.canceled += ctx => isRunning = false;
+
+        // Look - Right Controller
+        turnActionReference.action.performed += ctx => turn = ctx.ReadValue<float>();
+        turnActionReference.action.canceled += ctx => turn = 0f;
+
+        // Scroll - Right Controller
+        scrollActionReference.action.performed += ctx => scrollToolBar = ctx.ReadValue<float>();
+        scrollActionReference.action.canceled += ctx => scrollToolBar = 0;
+
+        jumpActionReference.action.performed += ctx =>
         {
             if (isGrounded)
                 jumpRequest = true;
         };
-        inputActions.XRILeftHandInteraction.Run.started += ctx => isRunning = true;
-        inputActions.XRILeftHandInteraction.Run.canceled += ctx => isRunning = false;
-        inputActions.XRIRightHandInteraction.DebugScreen.started += ctx => world.TriggerDebugScreen();
 
-        inputActions.XRIRightHandInteraction.Activate.performed += ctx =>
+        debugScreenActionReference.action.started += ctx => TriggerDebugScreen();
+
+        removeBlockActionReference.action.performed += ctx =>
         {
             if (highlightBlock.gameObject.activeSelf)
             {
                 world.GetChunkFromVector3(highlightBlock.position).EditVoxel(highlightBlock.position, 0);
             }
         };
-        inputActions.XRIRightHandInteraction.Select.performed += ctx =>
+        placeBlockActionReference.action.performed += ctx =>
         {
             if (highlightBlock.gameObject.activeSelf)
             {
@@ -83,37 +101,27 @@ public class PlayerVR : MonoBehaviour
         };
     }
 
-    // Start is called before the first frame update
     void Start()
     {
         world = GameObject.Find("World").GetComponent<World>();
-
+        _body = GetComponent<Rigidbody>();
+        _xrOrigin = GetComponent<XROrigin>();
+        _capsuleCollider = GetComponent<CapsuleCollider>();
     }
 
     void Update()
     {
         PlaceCursorBlocks();
 
-        // Solution with Raycast
-        /* if (highlightBlock.gameObject.activeSelf)
-        {
-            // Destroy block
-            if (inputActions.XRIRightHandInteraction.Activate.triggered)
-                world.GetChunkFromVector3(highlightBlock.position).EditVoxel(highlightBlock.position, 0);
-            // Place block
-            if (inputActions.XRIRightHandInteraction.Select.triggered)
-                world.GetChunkFromVector3(placeBlock.position).EditVoxel(placeBlock.position, selectedBlockIndex);
-        } */
+        var center = _xrOrigin.CameraInOriginSpacePos;
+        _capsuleCollider.center = new Vector3(center.x, _capsuleCollider.height / 2, center.z);
+        _capsuleCollider.height = Mathf.Clamp(_xrOrigin.CameraInOriginSpaceHeight, 1.4f, 1.8f);
     }
 
     void FixedUpdate()
     {
-        CalculateVelocity();
         if (jumpRequest)
-            Jump();
-
-        transform.Rotate(Vector3.up * mouseX);
-        transform.Translate(velocity, Space.World);
+            OnJump();
     }
 
     private void CalculateVelocity()
@@ -131,44 +139,31 @@ public class PlayerVR : MonoBehaviour
 
         velocity += Vector3.up * verticalMomentum * Time.fixedDeltaTime;
 
-        if ((velocity.z > 0 && front) || (velocity.z < 0 && back))
+        /* if ((velocity.z > 0 && front) || (velocity.z < 0 && back))
             velocity.z = 0;
         if ((velocity.x > 0 && right) || (velocity.x < 0 && left))
             velocity.x = 0;
         if (velocity.y < 0)
             velocity.y = checkDownSpeed(velocity.y);
         else if (velocity.y > 0)
-            velocity.y = checkUpSpeed(velocity.y);
+            velocity.y = checkUpSpeed(velocity.y); */
     }
 
+    void OnJump()
+    {
+        if (isGrounded)
+            _body.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        jumpRequest = false;
+    }
     void Jump()
     {
         verticalMomentum = jumpForce;
-        isGrounded = false;
+        //isGrounded = false;
         jumpRequest = false;
     }
 
     private void PlaceCursorBlocks()
     {
-        // Solution with Raycast
-        /* RaycastHit hit;
-
-        if (Physics.Raycast(rHand.position, rHand.forward, out hit, reach))
-        {
-            if (world.CheckForVoxel(hit.point))
-            {
-                highlightBlock.position = new Vector3(Mathf.FloorToInt(hit.point.x), Mathf.FloorToInt(hit.point.y), Mathf.FloorToInt(hit.point.z));
-                placeBlock.position = new Vector3(Mathf.FloorToInt(hit.point.x), Mathf.FloorToInt(hit.point.y), Mathf.FloorToInt(hit.point.z));
-
-                highlightBlock.gameObject.SetActive(true);
-                placeBlock.gameObject.SetActive(true);
-                return;
-            }
-        }
-        highlightBlock.gameObject.SetActive(false);
-        placeBlock.gameObject.SetActive(false); */
-
-        // No Raycast
         float step = checkIncrement;
         Vector3 lastPos = new Vector3();
 
@@ -207,12 +202,12 @@ public class PlayerVR : MonoBehaviour
             (world.CheckForVoxel(new Vector3(transform.position.x + playerWidth, transform.position.y + downSpeed, transform.position.z + playerWidth)) && (!right && !front))
            )
         {
-            isGrounded = true;
+            //isGrounded = true;
             return 0;
         }
         else
         {
-            isGrounded = false;
+            //isGrounded = false;
             return downSpeed;
         }
 
@@ -283,6 +278,5 @@ public class PlayerVR : MonoBehaviour
         }
     }
 
-    void OnEnable() => inputActions.Enable();
-    void OnDisable() => inputActions.Disable();
+    public void TriggerDebugScreen() => debugScreen.SetActive(!debugScreen.activeSelf);
 }

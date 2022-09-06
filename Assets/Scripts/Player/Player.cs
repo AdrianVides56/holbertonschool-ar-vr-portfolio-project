@@ -55,7 +55,7 @@ public class Player : MonoBehaviour
         };
         inputActions.Player.Run.started += ctx => isRunning = true;
         inputActions.Player.Run.canceled += ctx => isRunning = false;
-        inputActions.Player.DebugScreen.started += ctx => world.TriggerDebugScreen();
+        /* inputActions.Player.DebugScreen.started += ctx => world.TriggerDebugScreen(); */
     }
 
     // Start is called before the first frame update

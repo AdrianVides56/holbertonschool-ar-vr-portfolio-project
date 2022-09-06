@@ -23,6 +23,8 @@ public class Toolbar : MonoBehaviour
             slot.icon.sprite = world.blocktypes[slot.itemID].icon;
             slot.icon.enabled = true;
         }
+
+        player.selectedBlockIndex = itemSlots[slotIndex].itemID;
     }
 
     void Update()
@@ -37,9 +39,9 @@ public class Toolbar : MonoBehaviour
         {
             canChangeSlot = false;
 
-            if (player.mouseY > 0.7f)
+            if (player.scrollToolBar > 0.7f)
                 slotIndex++;
-            else if (player.mouseY < -0.7f)
+            else if (player.scrollToolBar < -0.7f)
                 slotIndex--;
             
             if (slotIndex > itemSlots.Length - 1)
