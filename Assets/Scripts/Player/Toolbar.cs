@@ -39,9 +39,9 @@ public class Toolbar : MonoBehaviour
         {
             canChangeSlot = false;
 
-            if (player.scrollToolBar > 0.7f)
+            if (player._scrollToolBar > 0.7f)
                 slotIndex++;
-            else if (player.scrollToolBar < -0.7f)
+            else if (player._scrollToolBar < -0.7f)
                 slotIndex--;
             
             if (slotIndex > itemSlots.Length - 1)

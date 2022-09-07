@@ -16,6 +16,12 @@ MonoBehaviour:
   solidGroundHeight: 42
   terrainHeight: 42
   terrainScale: 0.25
+  treeZoneScale: 2
+  treeZoneThreshold: 0.6
+  treePlacementScale: 30
+  treePlacementThreshold: 0.8
+  maxTreeHeight: 12
+  minTreeHeight: 5
   lodes:
   - name: Dirt
     blockID: 5

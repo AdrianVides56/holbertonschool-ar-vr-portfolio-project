@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.XR.Interaction.Toolkit;
 using Unity.XR.CoreUtils;
+using UnityEngine.XR.Interaction.Toolkit;
 
 public class PlayerVR : MonoBehaviour
 {
@@ -10,37 +10,33 @@ public class PlayerVR : MonoBehaviour
     [Header("Movement")]
     public float walkSpeed = 3f;
     public float runSpeed = 6f;
-    public bool isGrounded => Physics.OverlapSphere(groundCheckPoint.position, .25f, groundLayer).Length > 0;
     public bool isRunning;
+    public bool isGrounded => Physics.OverlapSphere(groundCheckPoint.position, .25f, groundLayer).Length > 0;
     public float jumpForce = 5f;
-    private bool jumpRequest;
-    private float verticalMomentum = 0f;
-    public float gravity = -9.81f;
-    private Vector3 velocity;
     private Rigidbody _body;
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private Transform groundCheckPoint;
+    [SerializeField] private ContinuousMoveProviderBase continuousMoveProvider;
+
     private XROrigin _xrOrigin;
     private CapsuleCollider _capsuleCollider;
 
-    private float horizontal;
-    private float vertical;
-    private float turn;
-    public float scrollToolBar;
+    [Header("Joysticks")]
+    private float _horizontal;
+    private float _vertical;
+    private float _turn;
+    public float _scrollToolBar;
 
-    [Header("")]
+    [Header("Block Placement")]
     public byte selectedBlockIndex = 1;
     public Transform highlightBlock;
     public Transform placeBlock;
     public float checkIncrement = 0.1f;
     public float reach = 8f;
 
+    [Header("")]
     public Transform rHand;
     public Transform lHand;
-
-    public float playerWidth = 0.5f;
-    public float playerHeight = 1.8f;
-
     public GameObject debugScreen;
 
     [Header("My Actions")]
@@ -53,55 +49,38 @@ public class PlayerVR : MonoBehaviour
     [SerializeField] private InputActionReference removeBlockActionReference;
     [SerializeField] private InputActionReference placeBlockActionReference;
 
-    void Awake()
+    private void Awake()
     {
         // Movement - Left Controller
         moveActionReference.action.performed += ctx =>
         {
-            horizontal = ctx.ReadValue<Vector2>().x;
-            vertical = ctx.ReadValue<Vector2>().y;
+            _horizontal = ctx.ReadValue<Vector2>().x;
+            _vertical = ctx.ReadValue<Vector2>().y;
         };
         moveActionReference.action.canceled += ctx =>
         {
-            horizontal = 0f;
-            vertical = 0f;
+            _horizontal = 0f;
+            _vertical = 0f;
         };
-        runActionReference.action.started += ctx => isRunning = true;
-        runActionReference.action.canceled += ctx => isRunning = false;
 
-        // Look - Right Controller
-        turnActionReference.action.performed += ctx => turn = ctx.ReadValue<float>();
-        turnActionReference.action.canceled += ctx => turn = 0f;
+        runActionReference.action.started += ctx => continuousMoveProvider.moveSpeed = runSpeed;
+        runActionReference.action.canceled += ctx => continuousMoveProvider.moveSpeed = walkSpeed;
 
-        // Scroll - Right Controller
-        scrollActionReference.action.performed += ctx => scrollToolBar = ctx.ReadValue<float>();
-        scrollActionReference.action.canceled += ctx => scrollToolBar = 0;
+        turnActionReference.action.performed += ctx => _turn = ctx.ReadValue<float>();
+        turnActionReference.action.canceled += ctx => _turn = 0f;
 
-        jumpActionReference.action.performed += ctx =>
-        {
-            if (isGrounded)
-                jumpRequest = true;
-        };
+        scrollActionReference.action.performed += ctx => _scrollToolBar = ctx.ReadValue<float>();
+        scrollActionReference.action.canceled += ctx => _scrollToolBar = 0;
 
         debugScreenActionReference.action.started += ctx => TriggerDebugScreen();
 
-        removeBlockActionReference.action.performed += ctx =>
-        {
-            if (highlightBlock.gameObject.activeSelf)
-            {
-                world.GetChunkFromVector3(highlightBlock.position).EditVoxel(highlightBlock.position, 0);
-            }
-        };
-        placeBlockActionReference.action.performed += ctx =>
-        {
-            if (highlightBlock.gameObject.activeSelf)
-            {
-                world.GetChunkFromVector3(placeBlock.position).EditVoxel(placeBlock.position, selectedBlockIndex);
-            }
-        };
+        jumpActionReference.action.performed += OnJump;
+
+        removeBlockActionReference.action.performed += OnRemoveBlock;
+        placeBlockActionReference.action.performed += OnPlaceBlock;
     }
 
-    void Start()
+    private void Start()
     {
         world = GameObject.Find("World").GetComponent<World>();
         _body = GetComponent<Rigidbody>();
@@ -109,7 +88,7 @@ public class PlayerVR : MonoBehaviour
         _capsuleCollider = GetComponent<CapsuleCollider>();
     }
 
-    void Update()
+    private void Update()
     {
         PlaceCursorBlocks();
 
@@ -118,48 +97,23 @@ public class PlayerVR : MonoBehaviour
         _capsuleCollider.height = Mathf.Clamp(_xrOrigin.CameraInOriginSpaceHeight, 1.4f, 1.8f);
     }
 
-    void FixedUpdate()
+    private void OnJump(InputAction.CallbackContext ctx)
     {
-        if (jumpRequest)
-            OnJump();
+        if (!isGrounded)
+            return;
+        _body.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
     }
 
-    private void CalculateVelocity()
+    private void OnRemoveBlock(InputAction.CallbackContext ctx)
     {
-        // Affect vertical momentum with gravity
-        if (verticalMomentum > gravity)
-            verticalMomentum += gravity * Time.fixedDeltaTime;
-        else
-            verticalMomentum = gravity;
-        // Run multiplier
-        if (isRunning)
-            velocity = ((transform.forward * vertical) + (transform.right * horizontal)) * Time.fixedDeltaTime * runSpeed;
-        else
-            velocity = ((transform.forward * vertical) + (transform.right * horizontal)) * Time.fixedDeltaTime * walkSpeed;
-
-        velocity += Vector3.up * verticalMomentum * Time.fixedDeltaTime;
-
-        /* if ((velocity.z > 0 && front) || (velocity.z < 0 && back))
-            velocity.z = 0;
-        if ((velocity.x > 0 && right) || (velocity.x < 0 && left))
-            velocity.x = 0;
-        if (velocity.y < 0)
-            velocity.y = checkDownSpeed(velocity.y);
-        else if (velocity.y > 0)
-            velocity.y = checkUpSpeed(velocity.y); */
+        if (highlightBlock.gameObject.activeSelf)
+            world.GetChunkFromVector3(highlightBlock.position).EditVoxel(highlightBlock.position, 0);
     }
 
-    void OnJump()
+    private void OnPlaceBlock(InputAction.CallbackContext ctx)
     {
-        if (isGrounded)
-            _body.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        jumpRequest = false;
-    }
-    void Jump()
-    {
-        verticalMomentum = jumpForce;
-        //isGrounded = false;
-        jumpRequest = false;
+        if (highlightBlock.gameObject.activeSelf)
+            world.GetChunkFromVector3(placeBlock.position).EditVoxel(placeBlock.position, selectedBlockIndex);
     }
 
     private void PlaceCursorBlocks()
@@ -180,102 +134,15 @@ public class PlayerVR : MonoBehaviour
                 placeBlock.gameObject.SetActive(true);
 
                 return;
-
             }
 
             lastPos = new Vector3(Mathf.FloorToInt(pos.x), Mathf.FloorToInt(pos.y), Mathf.FloorToInt(pos.z));
 
             step += checkIncrement;
-
         }
 
         highlightBlock.gameObject.SetActive(false);
         placeBlock.gameObject.SetActive(false);
-    }
-
-    private float checkDownSpeed(float downSpeed)
-    {
-        if (
-            (world.CheckForVoxel(new Vector3(transform.position.x - playerWidth, transform.position.y + downSpeed, transform.position.z - playerWidth)) && (!left && !back))  ||
-            (world.CheckForVoxel(new Vector3(transform.position.x + playerWidth, transform.position.y + downSpeed, transform.position.z - playerWidth)) && (!right && !back)) ||
-            (world.CheckForVoxel(new Vector3(transform.position.x - playerWidth, transform.position.y + downSpeed, transform.position.z + playerWidth)) && (!left && !front)) ||
-            (world.CheckForVoxel(new Vector3(transform.position.x + playerWidth, transform.position.y + downSpeed, transform.position.z + playerWidth)) && (!right && !front))
-           )
-        {
-            //isGrounded = true;
-            return 0;
-        }
-        else
-        {
-            //isGrounded = false;
-            return downSpeed;
-        }
-
-    }
-
-    private float checkUpSpeed(float upSpeed)
-    {
-        if (
-            (world.CheckForVoxel(new Vector3(transform.position.x - playerWidth, transform.position.y + playerHeight + upSpeed, transform.position.z - playerWidth)) && (!left && !back)) ||
-            (world.CheckForVoxel(new Vector3(transform.position.x + playerWidth, transform.position.y + playerHeight + upSpeed, transform.position.z - playerWidth)) && (!right && !back)) ||
-            (world.CheckForVoxel(new Vector3(transform.position.x - playerWidth, transform.position.y + playerHeight + upSpeed, transform.position.z + playerWidth)) && (!left && !front)) ||
-            (world.CheckForVoxel(new Vector3(transform.position.x + playerWidth, transform.position.y + playerHeight + upSpeed, transform.position.z + playerWidth)) && (!right && !front))
-            )
-            {
-                verticalMomentum = 0;
-                return 0;
-            }
-        else
-            return upSpeed;
-
-    }
-
-    public bool front
-    {
-        get
-        {
-            if (world.CheckForVoxel(new Vector3(transform.position.x, transform.position.y, transform.position.z + playerWidth)) ||
-                world.CheckForVoxel(new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z + playerWidth)))
-                return true;
-            else
-                return false;
-        }
-    }
-
-    public bool back
-    {
-        get
-        {
-            if (world.CheckForVoxel(new Vector3(transform.position.x, transform.position.y, transform.position.z - playerWidth)) ||
-                world.CheckForVoxel(new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z - playerWidth)))
-                return true;
-            else
-                return false;
-        }
-    }
-
-    public bool left
-    {
-        get
-        {
-            if (world.CheckForVoxel(new Vector3(transform.position.x - playerWidth, transform.position.y, transform.position.z)) ||
-                world.CheckForVoxel(new Vector3(transform.position.x - playerWidth, transform.position.y + 1f, transform.position.z)))
-                return true;
-            else
-                return false;
-        }
-    }
-
-    public bool right
-    {
-        get
-        {
-            if (world.CheckForVoxel(new Vector3(transform.position.x + playerWidth, transform.position.y, transform.position.z)) ||
-                world.CheckForVoxel(new Vector3(transform.position.x + playerWidth, transform.position.y + 1f, transform.position.z)))
-                return true;
-            else
-                return false;
-        }
     }
 
     public void TriggerDebugScreen() => debugScreen.SetActive(!debugScreen.activeSelf);
