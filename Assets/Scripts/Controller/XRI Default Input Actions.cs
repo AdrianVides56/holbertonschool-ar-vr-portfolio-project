@@ -1531,6 +1531,33 @@ public partial class @XRIDefaultInputActions : IInputActionCollection2, IDisposa
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Menu"",
+                    ""type"": ""Button"",
+                    ""id"": ""ad940f79-89c4-4dec-b9fe-daa390cb29f2"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Click"",
+                    ""type"": ""Button"",
+                    ""id"": ""0cf20fec-a043-434e-9416-ed138a844462"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""AltClick"",
+                    ""type"": ""Button"",
+                    ""id"": ""8fe9e4f0-99af-4a77-b28c-f4ecf8ce464f"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1641,6 +1668,61 @@ public partial class @XRIDefaultInputActions : IInputActionCollection2, IDisposa
                     ""processors"": """",
                     ""groups"": ""Generic XR Controller"",
                     ""action"": ""Scroll"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bb5ba419-21c2-47c2-a52d-0ffc874dc32b"",
+                    ""path"": ""<XRSimulatedController>{LeftHand}/menuButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Generic XR Controller"",
+                    ""action"": ""Menu"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c663c3ca-0b92-457f-a13a-9039883e10f1"",
+                    ""path"": ""<XRInputV1::Oculus::OculusTouchControllerOpenXR>/menu"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Menu"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c5631144-5d7b-4ed4-85cf-368d93b9f7a1"",
+                    ""path"": ""<XRController>{LeftHand}/menu"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Menu"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5fb62905-0719-499e-9407-391a3e9a9bde"",
+                    ""path"": ""<XRController>/triggerPressed"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Generic XR Controller"",
+                    ""action"": ""Click"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8289f862-d7a4-4825-91be-644d02dc0f88"",
+                    ""path"": ""<XRController>/gripPressed"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AltClick"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1781,6 +1863,9 @@ public partial class @XRIDefaultInputActions : IInputActionCollection2, IDisposa
         m_Player_RemoveBlock = m_Player.FindAction("RemoveBlock", throwIfNotFound: true);
         m_Player_PlaceBlock = m_Player.FindAction("PlaceBlock", throwIfNotFound: true);
         m_Player_Scroll = m_Player.FindAction("Scroll", throwIfNotFound: true);
+        m_Player_Menu = m_Player.FindAction("Menu", throwIfNotFound: true);
+        m_Player_Click = m_Player.FindAction("Click", throwIfNotFound: true);
+        m_Player_AltClick = m_Player.FindAction("AltClick", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -2424,6 +2509,9 @@ public partial class @XRIDefaultInputActions : IInputActionCollection2, IDisposa
     private readonly InputAction m_Player_RemoveBlock;
     private readonly InputAction m_Player_PlaceBlock;
     private readonly InputAction m_Player_Scroll;
+    private readonly InputAction m_Player_Menu;
+    private readonly InputAction m_Player_Click;
+    private readonly InputAction m_Player_AltClick;
     public struct PlayerActions
     {
         private @XRIDefaultInputActions m_Wrapper;
@@ -2436,6 +2524,9 @@ public partial class @XRIDefaultInputActions : IInputActionCollection2, IDisposa
         public InputAction @RemoveBlock => m_Wrapper.m_Player_RemoveBlock;
         public InputAction @PlaceBlock => m_Wrapper.m_Player_PlaceBlock;
         public InputAction @Scroll => m_Wrapper.m_Player_Scroll;
+        public InputAction @Menu => m_Wrapper.m_Player_Menu;
+        public InputAction @Click => m_Wrapper.m_Player_Click;
+        public InputAction @AltClick => m_Wrapper.m_Player_AltClick;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2469,6 +2560,15 @@ public partial class @XRIDefaultInputActions : IInputActionCollection2, IDisposa
                 @Scroll.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnScroll;
                 @Scroll.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnScroll;
                 @Scroll.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnScroll;
+                @Menu.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMenu;
+                @Menu.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMenu;
+                @Menu.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMenu;
+                @Click.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnClick;
+                @Click.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnClick;
+                @Click.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnClick;
+                @AltClick.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnAltClick;
+                @AltClick.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnAltClick;
+                @AltClick.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnAltClick;
             }
             m_Wrapper.m_PlayerActionsCallbackInterface = instance;
             if (instance != null)
@@ -2497,6 +2597,15 @@ public partial class @XRIDefaultInputActions : IInputActionCollection2, IDisposa
                 @Scroll.started += instance.OnScroll;
                 @Scroll.performed += instance.OnScroll;
                 @Scroll.canceled += instance.OnScroll;
+                @Menu.started += instance.OnMenu;
+                @Menu.performed += instance.OnMenu;
+                @Menu.canceled += instance.OnMenu;
+                @Click.started += instance.OnClick;
+                @Click.performed += instance.OnClick;
+                @Click.canceled += instance.OnClick;
+                @AltClick.started += instance.OnAltClick;
+                @AltClick.performed += instance.OnAltClick;
+                @AltClick.canceled += instance.OnAltClick;
             }
         }
     }
@@ -2609,5 +2718,8 @@ public partial class @XRIDefaultInputActions : IInputActionCollection2, IDisposa
         void OnRemoveBlock(InputAction.CallbackContext context);
         void OnPlaceBlock(InputAction.CallbackContext context);
         void OnScroll(InputAction.CallbackContext context);
+        void OnMenu(InputAction.CallbackContext context);
+        void OnClick(InputAction.CallbackContext context);
+        void OnAltClick(InputAction.CallbackContext context);
     }
 }

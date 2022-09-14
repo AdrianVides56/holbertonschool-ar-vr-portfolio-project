@@ -1,30 +1,38 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class Toolbar : MonoBehaviour
 {
-    World world;
     public PlayerVR player;
 
+    public UIItemSlot[] slots;
     public RectTransform highlight;
-    public ItemSlot[] itemSlots;
-
-    int slotIndex = 0;
+    public int slotIndex = 0;
     bool canChangeSlot = true;
 
-    void Start()
+    private void Start()
     {
-        world = GameObject.Find("World").GetComponent<World>();
-        
-        foreach(ItemSlot slot in itemSlots)
+        byte index = 1;
+        ItemStack stack;
+        ItemSlot slot;
+        /* foreach (UIItemSlot s in slots)
         {
-            slot.icon.sprite = world.blocktypes[slot.itemID].icon;
-            slot.icon.enabled = true;
+            ItemStack stack = new ItemStack(index, Random.Range(2, 65));
+            ItemSlot slot = new ItemSlot(s, stack);
+            index++;
+        } */
+        for (int i = 0; i < slots.Length - 2; i++)
+        {
+            stack = new ItemStack(index, Random.Range(2, 65));
+            slot = new ItemSlot(slots[i], stack);
+            index++;
         }
 
-        player.selectedBlockIndex = itemSlots[slotIndex].itemID;
+        stack = new ItemStack(index, Random.Range(2, 50));
+        slot = new ItemSlot(slots[slots.Length - 2], stack);
+        stack = new ItemStack(index, Random.Range(2, 40));
+        slot = new ItemSlot(slots[slots.Length - 1], stack);
     }
 
     void Update()
@@ -44,25 +52,17 @@ public class Toolbar : MonoBehaviour
             else if (player._scrollToolBar < -0.7f)
                 slotIndex--;
             
-            if (slotIndex > itemSlots.Length - 1)
+            if (slotIndex > slots.Length - 1)
                 slotIndex = 0;
             else if (slotIndex < 0)
-                slotIndex = itemSlots.Length - 1;
+                slotIndex = slots.Length - 1;
 
         }
 
-        highlight.position = itemSlots[slotIndex].icon.transform.position;
-        player.selectedBlockIndex = itemSlots[slotIndex].itemID;
+        highlight.position = slots[slotIndex].slotIcon.transform.position;
 
         yield return new WaitForSeconds(.2f);
         canChangeSlot = true;
 
     } 
-}
-
-[System.Serializable]
-public class ItemSlot
-{
-    public byte itemID;
-    public Image icon;
 }

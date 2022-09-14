@@ -4,9 +4,11 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
+    [Header("World Generation")]
     public int seed;
     public BiomeAttributes biome;
 
+    [Header("")]
     public Transform player;
     public Vector3 spawnPosition;
 
@@ -23,10 +25,13 @@ public class World : MonoBehaviour
 
     List<ChunkCoord> chunksToCreate = new List<ChunkCoord>();
     List<Chunk> chunksToUpdate = new List<Chunk>();
+    public Queue<Chunk> chunksToDraw = new Queue<Chunk>();
 
     bool applyingModifications = false;
 
     Queue<VoxelMod> modifications = new Queue<VoxelMod>();
+
+    private bool _inUI = false;
 
     private void Start()
     {
@@ -65,7 +70,7 @@ public class World : MonoBehaviour
             }
 
         }
-
+        
         while (modifications.Count > 0)
         {
             VoxelMod v = modifications.Dequeue();
@@ -141,7 +146,7 @@ public class World : MonoBehaviour
 
             if (!chunksToUpdate.Contains(chunks[c.x, c.z]))
                 chunksToUpdate.Add(chunks[c.x, c.z]);
-
+            
             count++;
             if (count > 200)
             {
@@ -149,7 +154,6 @@ public class World : MonoBehaviour
                 yield return null;
             }
         }
-
         applyingModifications = false;
     }
 
@@ -174,6 +178,8 @@ public class World : MonoBehaviour
 
         List<ChunkCoord> previouslyActiveChunks = new List<ChunkCoord>(activeChunks);
 
+        activeChunks.Clear();
+
         for (int x = coord.x - VoxelData.viewDistanceInChunks; x < coord.x + VoxelData.viewDistanceInChunks; x++)
         {
             for (int z = coord.z - VoxelData.viewDistanceInChunks; z < coord.z + VoxelData.viewDistanceInChunks; z++)
@@ -195,9 +201,7 @@ public class World : MonoBehaviour
                 for (int i = 0; i < previouslyActiveChunks.Count; i++)
                 {
                     if (previouslyActiveChunks[i].Equals(new ChunkCoord(x, z)))
-                    {
                         previouslyActiveChunks.RemoveAt(i);
-                    }
                 }
             }
         }
@@ -223,7 +227,7 @@ public class World : MonoBehaviour
 
     }
 
-        public bool CheckIfVoxelTransparent(Vector3 pos)
+    public bool CheckIfVoxelTransparent(Vector3 pos)
     {
         ChunkCoord thisChunk = new ChunkCoord(pos);
 
@@ -231,12 +235,20 @@ public class World : MonoBehaviour
             return false;
         
         if (chunks[thisChunk.x, thisChunk.z] != null && chunks[thisChunk.x, thisChunk.z].isVoxelMapPopulated)
-            return blocktypes[chunks[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
+            return blocktypes[chunks[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].renderNeighborFaces;
         
-        return blocktypes[GetVoxel(pos)].isTransparent;
+        return blocktypes[GetVoxel(pos)].renderNeighborFaces;
 
     }
 
+    public bool inUI
+    {
+        get { return _inUI; }
+        set 
+        {
+            _inUI = value;
+        }
+    }
 
     public byte GetVoxel(Vector3 pos)
     {
@@ -274,8 +286,8 @@ public class World : MonoBehaviour
                 {
                     if (Noise.Get3dPerlin(pos, lode.noiseOffset, lode.scale, lode.threshold))
                     {
-                        voxelValue = lode.blockID;
-                        //voxelValue = 0; For caves
+                        //voxelValue = lode.blockID;
+                        voxelValue = 0; //For caves
                     }
                 }
             }
@@ -318,8 +330,9 @@ public class BlockType
 {
     public string blockName;
     public bool isSolid;
-    public bool isTransparent;
+    public bool renderNeighborFaces;
     public Sprite icon;
+    public int stackLimit = 64;
 
     [Header ("Textures Values")]
     public int backFaceTexture;

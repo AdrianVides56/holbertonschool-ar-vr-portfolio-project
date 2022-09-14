@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.XR.CoreUtils;
@@ -6,6 +7,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 public class PlayerVR : MonoBehaviour
 {
     private World world;
+    public XRIDefaultInputActions inputActions;
 
     [Header("Movement")]
     public float walkSpeed = 3f;
@@ -17,6 +19,7 @@ public class PlayerVR : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private Transform groundCheckPoint;
     [SerializeField] private ContinuousMoveProviderBase continuousMoveProvider;
+    [SerializeField] private GameObject locomotionSystem;
 
     private XROrigin _xrOrigin;
     private CapsuleCollider _capsuleCollider;
@@ -28,16 +31,20 @@ public class PlayerVR : MonoBehaviour
     public float _scrollToolBar;
 
     [Header("Block Placement")]
-    public byte selectedBlockIndex = 1;
+    //public byte selectedBlockIndex = 1;
     public Transform highlightBlock;
     public Transform placeBlock;
     public float checkIncrement = 0.1f;
     public float reach = 8f;
 
+    public Toolbar toolbar;
+
     [Header("")]
     public Transform rHand;
     public Transform lHand;
     public GameObject debugScreen;
+    public GameObject creativeInventoryWindow;
+    public GameObject cursorSlot;
 
     [Header("My Actions")]
     [SerializeField] private InputActionReference moveActionReference;
@@ -48,9 +55,14 @@ public class PlayerVR : MonoBehaviour
     [SerializeField] private InputActionReference debugScreenActionReference;
     [SerializeField] private InputActionReference removeBlockActionReference;
     [SerializeField] private InputActionReference placeBlockActionReference;
+    [SerializeField] private InputActionReference menuButton;
+
+    private void OnEnable() => inputActions.Enable();
+    private void OnDisable() => inputActions.Disable();
 
     private void Awake()
     {
+        inputActions = new XRIDefaultInputActions();
         // Movement - Left Controller
         moveActionReference.action.performed += ctx =>
         {
@@ -63,8 +75,8 @@ public class PlayerVR : MonoBehaviour
             _vertical = 0f;
         };
 
-        runActionReference.action.started += ctx => continuousMoveProvider.moveSpeed = runSpeed;
-        runActionReference.action.canceled += ctx => continuousMoveProvider.moveSpeed = walkSpeed;
+        runActionReference.action.started += ctx => locomotionSystem.GetComponent<ContinuousMoveProviderBase>().moveSpeed = runSpeed;
+        runActionReference.action.canceled += ctx => locomotionSystem.GetComponent<ContinuousMoveProviderBase>().moveSpeed = walkSpeed;
 
         turnActionReference.action.performed += ctx => _turn = ctx.ReadValue<float>();
         turnActionReference.action.canceled += ctx => _turn = 0f;
@@ -78,6 +90,42 @@ public class PlayerVR : MonoBehaviour
 
         removeBlockActionReference.action.performed += OnRemoveBlock;
         placeBlockActionReference.action.performed += OnPlaceBlock;
+
+        menuButton.action.performed += ctx =>
+        {
+            world.inUI = !world.inUI;
+
+            if (world.inUI)
+            {
+                moveActionReference.action.Disable();
+                turnActionReference.action.Disable();
+                scrollActionReference.action.Disable();
+                jumpActionReference.action.Disable();
+                runActionReference.action.Disable();
+                debugScreenActionReference.action.Disable();
+                removeBlockActionReference.action.Disable();
+                placeBlockActionReference.action.Disable();
+                locomotionSystem.GetComponent<ContinuousMoveProviderBase>().enabled = false;
+                locomotionSystem.GetComponent<SnapTurnProviderBase>().enabled = false;
+                creativeInventoryWindow.SetActive(true);
+                cursorSlot.SetActive(true);
+            }
+            else
+            {
+                moveActionReference.action.Enable();
+                turnActionReference.action.Enable();
+                scrollActionReference.action.Enable();
+                jumpActionReference.action.Enable();
+                runActionReference.action.Enable();
+                debugScreenActionReference.action.Enable();
+                removeBlockActionReference.action.Enable();
+                placeBlockActionReference.action.Enable();
+                locomotionSystem.GetComponent<ContinuousMoveProviderBase>().enabled = true;
+                locomotionSystem.GetComponent<SnapTurnProviderBase>().enabled = true;
+                creativeInventoryWindow.SetActive(false);
+                cursorSlot.SetActive(false);
+            }
+        };
     }
 
     private void Start()
@@ -90,11 +138,15 @@ public class PlayerVR : MonoBehaviour
 
     private void Update()
     {
-        PlaceCursorBlocks();
+        if (!world.inUI)
+        {
+            PlaceCursorBlocks();
 
-        var center = _xrOrigin.CameraInOriginSpacePos;
-        _capsuleCollider.center = new Vector3(center.x, _capsuleCollider.height / 2, center.z);
-        _capsuleCollider.height = Mathf.Clamp(_xrOrigin.CameraInOriginSpaceHeight, 1.4f, 1.8f);
+            // move the player with the headset
+            var center = _xrOrigin.CameraInOriginSpacePos;
+            _capsuleCollider.center = new Vector3(center.x, _capsuleCollider.height / 2, center.z);
+            _capsuleCollider.height = Mathf.Clamp(_xrOrigin.CameraInOriginSpaceHeight, 1.4f, 1.8f);
+        }
     }
 
     private void OnJump(InputAction.CallbackContext ctx)
@@ -113,7 +165,13 @@ public class PlayerVR : MonoBehaviour
     private void OnPlaceBlock(InputAction.CallbackContext ctx)
     {
         if (highlightBlock.gameObject.activeSelf)
-            world.GetChunkFromVector3(placeBlock.position).EditVoxel(placeBlock.position, selectedBlockIndex);
+        {
+            if (toolbar.slots[toolbar.slotIndex].HasItem)
+            {
+                world.GetChunkFromVector3(placeBlock.position).EditVoxel(placeBlock.position, toolbar.slots[toolbar.slotIndex].itemSlot.stack.id);
+                toolbar.slots[toolbar.slotIndex].itemSlot.Take(1);
+            }
+        }
     }
 
     private void PlaceCursorBlocks()

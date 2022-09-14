@@ -24,7 +24,7 @@ public class Chunk
 
     public Queue<VoxelMod> modifications = new Queue<VoxelMod>();
 
-    World world;    
+    World world;
 
     private bool _isActive;
     public bool isVoxelMapPopulated = false;
@@ -37,7 +37,6 @@ public class Chunk
 
         if (generateOnLoad)
             Init();
-        
     }
 
     public void Init()
@@ -45,12 +44,11 @@ public class Chunk
         chunkObject = new GameObject();
         meshFilter = chunkObject.AddComponent<MeshFilter>();
         meshRenderer = chunkObject.AddComponent<MeshRenderer>();
-
         meshCollider = chunkObject.AddComponent<MeshCollider>();
 
-        materials[0] = world.material;
-        materials[1] = world.transparentMaterial;
-        meshRenderer.materials = materials;
+        //materials[0] = world.material;
+        //materials[1] = world.transparentMaterial;
+        meshRenderer.material = world.material;
 
         chunkObject.transform.SetParent(world.transform);      
         chunkObject.transform.position = new Vector3(coord.x * VoxelData.chunkWidth, 0.0f, coord.z * VoxelData.chunkWidth);  
@@ -176,7 +174,7 @@ public class Chunk
         if (!IsVoxelInChunk(x, y, z))
             return world.CheckIfVoxelTransparent(pos + position);
         
-        return world.blocktypes[voxelMap[x, y, z]].isTransparent;
+        return world.blocktypes[voxelMap[x, y, z]].renderNeighborFaces;
     }
 
     public byte GetVoxelFromGlobalVector3(Vector3 pos)
@@ -194,7 +192,7 @@ public class Chunk
     void UpdateMeshData(Vector3 pos)
     {
         byte blockID = voxelMap[(int)pos.x, (int)pos.y, (int)pos.z];
-        bool isTransparent = world.blocktypes[blockID].isTransparent;
+        bool isTransparent = world.blocktypes[blockID].renderNeighborFaces;
 
         for (int i = 0; i < 6; i++)
         {
@@ -203,11 +201,11 @@ public class Chunk
                 vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 0]]);    
                 vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 1]]);    
                 vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 2]]);    
-                vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 3]]);   
+                vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 3]]);
 
                 AddTexture(world.blocktypes[blockID].GetTextureID(i));
 
-                if (!isTransparent)
+                //if (!isTransparent)
                 {
                     triangles.Add(vertexIndex);
                     triangles.Add(vertexIndex + 1);
@@ -216,7 +214,7 @@ public class Chunk
                     triangles.Add(vertexIndex + 1);
                     triangles.Add(vertexIndex + 3);
                 }
-                else
+                /* else
                 {
                     transparentTriangles.Add(vertexIndex);
                     transparentTriangles.Add(vertexIndex + 1);
@@ -224,7 +222,7 @@ public class Chunk
                     transparentTriangles.Add(vertexIndex + 2);
                     transparentTriangles.Add(vertexIndex + 1);
                     transparentTriangles.Add(vertexIndex + 3);
-                }
+                } */
 
                 vertexIndex += 4;
 
@@ -232,16 +230,17 @@ public class Chunk
         }
     }
 
-    void CreateMesh()
+    public void CreateMesh()
     {
         Mesh mesh = new Mesh();
         mesh.vertices = vertices.ToArray();
         
-        mesh.subMeshCount = 2;
-        mesh.SetTriangles(triangles.ToArray(), 0);
-        mesh.SetTriangles(transparentTriangles.ToArray(), 1);
-
+        //mesh.subMeshCount = 2;
+        //mesh.SetTriangles(triangles.ToArray(), 0);
+        //mesh.SetTriangles(transparentTriangles.ToArray(), 1);
+        mesh.triangles = triangles.ToArray();
         mesh.uv = uvs.ToArray();
+        //mesh.colors = colors.ToArray();
 
         mesh.RecalculateNormals();
 
@@ -253,17 +252,21 @@ public class Chunk
         float y = textureID / VoxelData.textureAtlasSizeInBlocks;
         float x = textureID - (y * VoxelData.textureAtlasSizeInBlocks);
 
-        float uvOffset = 0.001f;
+        //float uvOffset = 0.001f;
 
         x *= VoxelData.NormalizedBlockTextureSize;
         y *= VoxelData.NormalizedBlockTextureSize;
 
         y = 1f - y - VoxelData.NormalizedBlockTextureSize;
 
-        uvs.Add(new Vector2(x + uvOffset, y + uvOffset));
+        /* uvs.Add(new Vector2(x + uvOffset, y + uvOffset));
         uvs.Add(new Vector2(x + uvOffset, y + VoxelData.NormalizedBlockTextureSize - uvOffset));
         uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y + uvOffset));
-        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize - uvOffset, y + VoxelData.NormalizedBlockTextureSize - uvOffset));
+        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize - uvOffset, y + VoxelData.NormalizedBlockTextureSize - uvOffset)); */
+        uvs.Add(new Vector2(x, y));
+        uvs.Add(new Vector2(x, y + VoxelData.NormalizedBlockTextureSize));
+        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y));
+        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y + VoxelData.NormalizedBlockTextureSize));
     }
 
 }
