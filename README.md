@@ -4,6 +4,13 @@
 
 VR-Craft is a [Voxel](https://www.computerhope.com/jargon/v/voxel.htm) Game inspired by [Minecraft](https://www.minecraft.net/en-us), where you can explore the world, create different kind of buildings and much more.
 
+<details>
+<summary> Credits </summary>
+
+This project was inspired on the Tutorial series [Code a Game Like Minecraft in Unity](https://youtube.com/playlist?list=PLVsTSlfj0qsWEJ-5eMtXsYp03Y9yF1dEn) by [@b3agz](https://twitter.com/b3agz)
+
+</details>
+
 ---
 
 ### Install: 
@@ -21,4 +28,3 @@ Quest2
 
 ### Used Assets:
 - [Ghostly Hand Shader](https://assetstore.unity.com/packages/vfx/shaders/ghostly-hand-shader-free-vr-212412) by [wolderado](https://twitter.com/Wolderado)
-- [Stylized PBR Textures](https://assetstore.unity.com/packages/2d/textures-materials/free-stylized-pbr-textures-pack-111778) by [Lumo-Art 3D](https://twitter.com/LumoArt3D)
