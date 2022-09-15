@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CreativeInventory : MonoBehaviour
 {
@@ -21,5 +22,10 @@ public class CreativeInventory : MonoBehaviour
             ItemSlot slot = new ItemSlot(newSlot.GetComponent<UIItemSlot>(), stack);
             slot.isCreative = true;
         }
+    }
+
+    public void GoToMainMenu()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }
 }

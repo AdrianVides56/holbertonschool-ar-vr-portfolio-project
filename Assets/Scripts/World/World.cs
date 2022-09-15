@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 public class World : MonoBehaviour
 {
+    public Settings settings;
+
     [Header("World Generation")]
     public int seed;
-    public BiomeAttributes biome;
+    public BiomeAttributes[] biomes;
 
     [Header("")]
     public Transform player;
@@ -35,6 +38,15 @@ public class World : MonoBehaviour
 
     private void Start()
     {
+
+        /* string jsonExport = JsonUtility.ToJson(settings);
+        Debug.Log(jsonExport);
+
+        File.WriteAllText(Application.dataPath + "/settings.json", jsonExport); */
+        /* string jsonImport = File.ReadAllText(Application.dataPath + "/settings.json");
+        settings = JsonUtility.FromJson<Settings>(jsonImport); 
+
+        Random.InitState(settings.seed);*/
         Random.InitState(seed);
 
         spawnPosition = new Vector3((VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight - 50, (VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f);
@@ -61,12 +73,13 @@ public class World : MonoBehaviour
 
     void GenerateWorld()
     {
-        for (int x = (VoxelData.worldSizeInChunks / 2) - VoxelData.viewDistanceInChunks; x < (VoxelData.worldSizeInChunks / 2) + VoxelData.viewDistanceInChunks; x++)
+        for (int x = (VoxelData.worldSizeInChunks / 2) - settings.viewDistance; x < (VoxelData.worldSizeInChunks / 2) + settings.viewDistance; x++)
         {
-            for (int z = (VoxelData.worldSizeInChunks / 2) - VoxelData.viewDistanceInChunks; z < (VoxelData.worldSizeInChunks / 2) + VoxelData.viewDistanceInChunks; z++)
+            for (int z = (VoxelData.worldSizeInChunks / 2) - settings.viewDistance; z < (VoxelData.worldSizeInChunks / 2) + settings.viewDistance; z++)
             {
-                chunks[x, z] = new Chunk(new ChunkCoord(x, z), this, true);
-                activeChunks.Add(new ChunkCoord(x, z));
+                ChunkCoord thisChunkCoord = new ChunkCoord(x, z);
+                chunks[x, z] = new Chunk(thisChunkCoord, this, true);
+                activeChunks.Add(thisChunkCoord);
             }
 
         }
@@ -180,27 +193,29 @@ public class World : MonoBehaviour
 
         activeChunks.Clear();
 
-        for (int x = coord.x - VoxelData.viewDistanceInChunks; x < coord.x + VoxelData.viewDistanceInChunks; x++)
+        for (int x = coord.x - settings.viewDistance; x < coord.x + settings.viewDistance; x++)
         {
-            for (int z = coord.z - VoxelData.viewDistanceInChunks; z < coord.z + VoxelData.viewDistanceInChunks; z++)
+            for (int z = coord.z - settings.viewDistance; z < coord.z + settings.viewDistance; z++)
             {
-                if (isChunkInWorld(new ChunkCoord(x, z)))
+                ChunkCoord thisChunkCoord = new ChunkCoord(x, z);
+
+                if (isChunkInWorld(thisChunkCoord))
                 {
                     if (chunks[x, z] == null)
                     {
-                        chunks[x, z] = new Chunk(new ChunkCoord(x, z), this, false);
-                        chunksToCreate.Add(new ChunkCoord(x, z));
+                        chunks[x, z] = new Chunk(thisChunkCoord, this, false);
+                        chunksToCreate.Add(thisChunkCoord);
                     }
                     else if (!chunks[x, z].isActive)
                     {
                         chunks[x, z].isActive = true;
                     }
-                    activeChunks.Add(new ChunkCoord(x, z));
+                    activeChunks.Add(thisChunkCoord);
                 }
 
                 for (int i = 0; i < previouslyActiveChunks.Count; i++)
                 {
-                    if (previouslyActiveChunks[i].Equals(new ChunkCoord(x, z)))
+                    if (previouslyActiveChunks[i].Equals(thisChunkCoord))
                         previouslyActiveChunks.RemoveAt(i);
                 }
             }
@@ -264,18 +279,50 @@ public class World : MonoBehaviour
         if (yPos == 0)
             return 1; // bedrock
 
+        /* Biome Slection Pass */
+        int solidGroundHeight = 42;
+        float sumOfHeights = 0f;
+        int count = 0;
+        float strongestWeight = 0f;
+        int strongestBiomeIndex = 0;
+
+        for (int i = 0; i < biomes.Length; i++)
+        {
+            float weight = Noise.Get2DPerlin(new Vector2(pos.x, pos.z), biomes[i].offset, biomes[i].scale);
+
+            if (weight > strongestWeight) // Keep Track of which weight is strongest
+            {
+                strongestWeight = weight;
+                strongestBiomeIndex = i;
+            }
+
+            // Get the height of the terrain (for the current biome) and multiply it by its weight
+            float height = biomes[i].terrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biomes[i].terrainScale) * weight;
+
+            if (height > 0) // If the height is positive add it to the sum of heights
+            {
+                sumOfHeights += height;
+                count++;
+            }
+
+        }
+        BiomeAttributes biome = biomes[strongestBiomeIndex]; // Set biome to the one with the strongest weight
+
+        // Get the average of the heights
+        sumOfHeights /= count;
+        int terrainHeight = Mathf.FloorToInt(sumOfHeights) + solidGroundHeight;
+
         /* Basic Terrain Pass */
-        int terrainHeight = Mathf.FloorToInt(biome.terrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.terrainScale)) + biome.solidGroundHeight;
         byte voxelValue = 0;
 
         if (yPos == terrainHeight)
-            voxelValue = 3; // stone
+            voxelValue = biome.surfaceBlock;
         else if (yPos < terrainHeight && yPos > terrainHeight - 4)
-            voxelValue = 5; // dirt
+            voxelValue = biome.subSurfaceBlock;
         else if (yPos > terrainHeight)
             return 0; // air
         else
-            voxelValue = 2; // grass
+            voxelValue = 2;
 
         /* Second Pass */
         if (voxelValue == 2)
@@ -286,7 +333,6 @@ public class World : MonoBehaviour
                 {
                     if (Noise.Get3dPerlin(pos, lode.noiseOffset, lode.scale, lode.threshold))
                     {
-                        //voxelValue = lode.blockID;
                         voxelValue = 0; //For caves
                     }
                 }
@@ -294,13 +340,13 @@ public class World : MonoBehaviour
         }
 
         /* Tree Pass */
-        if (yPos == terrainHeight)
+        if (yPos == terrainHeight && biome.placeMajorFlora)
         {
-            if (Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.treeZoneScale) > biome.treeZoneThreshold)
+            if (Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.majorFloraZoneScale) > biome.majorFloraZoneThreshold)
             {
-                if (Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.treePlacementScale) > biome.treePlacementThreshold)
+                if (Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.majorFloraPlacementScale) > biome.majorFloraPlacementThreshold)
                 {
-                    Structure.MakeTree(pos, modifications, biome.minTreeHeight, biome.maxTreeHeight);
+                    Structure.GenerateMajorFlora(biome.majorFloraIndex, pos, modifications, biome.minHeight, biome.maxHeight);
                 }
             }
         }
@@ -383,4 +429,16 @@ public class VoxelMod
         position = _position;
         id = _id;
     }
+}
+
+[System.Serializable]
+public class Settings
+{
+    [Header("Performance")]
+    public int viewDistance = 4;
+
+    [Header("World Gen")]
+    public int seed;
+
+    
 }

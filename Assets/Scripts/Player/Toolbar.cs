@@ -16,23 +16,12 @@ public class Toolbar : MonoBehaviour
         byte index = 1;
         ItemStack stack;
         ItemSlot slot;
-        /* foreach (UIItemSlot s in slots)
-        {
-            ItemStack stack = new ItemStack(index, Random.Range(2, 65));
-            ItemSlot slot = new ItemSlot(s, stack);
-            index++;
-        } */
-        for (int i = 0; i < slots.Length - 2; i++)
+        foreach (UIItemSlot s in slots)
         {
             stack = new ItemStack(index, Random.Range(2, 65));
-            slot = new ItemSlot(slots[i], stack);
+            slot = new ItemSlot(s, stack);
             index++;
         }
-
-        stack = new ItemStack(index, Random.Range(2, 50));
-        slot = new ItemSlot(slots[slots.Length - 2], stack);
-        stack = new ItemStack(index, Random.Range(2, 40));
-        slot = new ItemSlot(slots[slots.Length - 1], stack);
     }
 
     void Update()

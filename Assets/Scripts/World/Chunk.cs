@@ -19,6 +19,7 @@ public class Chunk
     List<int> transparentTriangles = new List<int>();
     Material[] materials = new Material[2];
     List<Vector2> uvs = new List<Vector2>();
+    List<Vector3> normals = new List<Vector3>();
 
     public byte[,,] voxelMap = new byte[VoxelData.chunkWidth, VoxelData.chunkHeight, VoxelData.chunkWidth];
 
@@ -46,9 +47,9 @@ public class Chunk
         meshRenderer = chunkObject.AddComponent<MeshRenderer>();
         meshCollider = chunkObject.AddComponent<MeshCollider>();
 
-        //materials[0] = world.material;
-        //materials[1] = world.transparentMaterial;
-        meshRenderer.material = world.material;
+        materials[0] = world.material;
+        materials[1] = world.transparentMaterial;
+        meshRenderer.materials = materials;
 
         chunkObject.transform.SetParent(world.transform);      
         chunkObject.transform.position = new Vector3(coord.x * VoxelData.chunkWidth, 0.0f, coord.z * VoxelData.chunkWidth);  
@@ -110,6 +111,7 @@ public class Chunk
         triangles.Clear();
         transparentTriangles.Clear();
         uvs.Clear();
+        normals.Clear();
     }
 
     public bool isActive
@@ -203,9 +205,12 @@ public class Chunk
                 vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 2]]);    
                 vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 3]]);
 
+                for (int n = 0; n < 4; n++)
+                    normals.Add(VoxelData.faceChecks[i]);
+
                 AddTexture(world.blocktypes[blockID].GetTextureID(i));
 
-                //if (!isTransparent)
+                if (!isTransparent)
                 {
                     triangles.Add(vertexIndex);
                     triangles.Add(vertexIndex + 1);
@@ -214,7 +219,7 @@ public class Chunk
                     triangles.Add(vertexIndex + 1);
                     triangles.Add(vertexIndex + 3);
                 }
-                /* else
+                else
                 {
                     transparentTriangles.Add(vertexIndex);
                     transparentTriangles.Add(vertexIndex + 1);
@@ -222,7 +227,7 @@ public class Chunk
                     transparentTriangles.Add(vertexIndex + 2);
                     transparentTriangles.Add(vertexIndex + 1);
                     transparentTriangles.Add(vertexIndex + 3);
-                } */
+                }
 
                 vertexIndex += 4;
 
@@ -235,14 +240,15 @@ public class Chunk
         Mesh mesh = new Mesh();
         mesh.vertices = vertices.ToArray();
         
-        //mesh.subMeshCount = 2;
-        //mesh.SetTriangles(triangles.ToArray(), 0);
-        //mesh.SetTriangles(transparentTriangles.ToArray(), 1);
-        mesh.triangles = triangles.ToArray();
+        mesh.subMeshCount = 2;
+        mesh.SetTriangles(triangles.ToArray(), 0);
+        mesh.SetTriangles(transparentTriangles.ToArray(), 1);
+        //mesh.triangles = triangles.ToArray();
         mesh.uv = uvs.ToArray();
         //mesh.colors = colors.ToArray();
 
-        mesh.RecalculateNormals();
+        mesh.normals = normals.ToArray();
+        //mesh.RecalculateNormals();
 
         meshFilter.mesh = mesh;
     }
@@ -252,21 +258,21 @@ public class Chunk
         float y = textureID / VoxelData.textureAtlasSizeInBlocks;
         float x = textureID - (y * VoxelData.textureAtlasSizeInBlocks);
 
-        //float uvOffset = 0.001f;
+        float uvOffset = 0.001f;
 
         x *= VoxelData.NormalizedBlockTextureSize;
         y *= VoxelData.NormalizedBlockTextureSize;
 
         y = 1f - y - VoxelData.NormalizedBlockTextureSize;
 
-        /* uvs.Add(new Vector2(x + uvOffset, y + uvOffset));
+        uvs.Add(new Vector2(x + uvOffset, y + uvOffset));
         uvs.Add(new Vector2(x + uvOffset, y + VoxelData.NormalizedBlockTextureSize - uvOffset));
         uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y + uvOffset));
-        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize - uvOffset, y + VoxelData.NormalizedBlockTextureSize - uvOffset)); */
-        uvs.Add(new Vector2(x, y));
+        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize - uvOffset, y + VoxelData.NormalizedBlockTextureSize - uvOffset));
+        /* uvs.Add(new Vector2(x, y));
         uvs.Add(new Vector2(x, y + VoxelData.NormalizedBlockTextureSize));
         uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y));
-        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y + VoxelData.NormalizedBlockTextureSize));
+        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y + VoxelData.NormalizedBlockTextureSize)); */
     }
 
 }

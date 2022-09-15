@@ -42,7 +42,6 @@ public class UIItemSlot : MonoBehaviour
     {
         itemSlot.UnlinkUISlot();
         itemSlot = null;
-        //isLinked = false;
         UpdateSlot();
     }
 

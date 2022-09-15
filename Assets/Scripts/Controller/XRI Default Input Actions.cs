@@ -1673,39 +1673,6 @@ public partial class @XRIDefaultInputActions : IInputActionCollection2, IDisposa
                 },
                 {
                     ""name"": """",
-                    ""id"": ""bb5ba419-21c2-47c2-a52d-0ffc874dc32b"",
-                    ""path"": ""<XRSimulatedController>{LeftHand}/menuButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Generic XR Controller"",
-                    ""action"": ""Menu"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""c663c3ca-0b92-457f-a13a-9039883e10f1"",
-                    ""path"": ""<XRInputV1::Oculus::OculusTouchControllerOpenXR>/menu"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Menu"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""c5631144-5d7b-4ed4-85cf-368d93b9f7a1"",
-                    ""path"": ""<XRController>{LeftHand}/menu"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Menu"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""5fb62905-0719-499e-9407-391a3e9a9bde"",
                     ""path"": ""<XRController>/triggerPressed"",
                     ""interactions"": """",
@@ -1723,6 +1690,17 @@ public partial class @XRIDefaultInputActions : IInputActionCollection2, IDisposa
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""AltClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""125afb2c-8a9b-48d9-943b-48a7044ed9dc"",
+                    ""path"": ""<XRController>{LeftHand}/primaryButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Generic XR Controller"",
+                    ""action"": ""Menu"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
